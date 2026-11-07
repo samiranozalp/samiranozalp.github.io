@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#164fc4">
+<title>Her Gün 50 Soru - Ehliyet Hazırlık</title>
+<style>
+:root{--blue:#164fc4;--dark:#172b4d;--bg:#f2f5fa;--green:#137a43;--red:#b42318;--line:#d9e1ee;--muted:#5c6b82}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--dark);font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5}
+header{background:var(--blue);color:#fff;padding:22px 15px;text-align:center}
+header h1{font-size:clamp(27px,5vw,38px);margin:0}
+header p{margin:5px 0 0}
+main{max-width:900px;margin:20px auto;padding:0 13px 45px}
+.card{background:#fff;border-radius:18px;padding:20px;margin:15px 0;box-shadow:0 4px 18px #13294b12}
+h2{font-size:25px;margin:0 0 12px}
+h3{font-size:21px;margin:0 0 8px}
+button{font:inherit;font-weight:700;border:0;border-radius:13px;padding:14px 17px;min-height:54px;cursor:pointer}
+button:focus-visible{outline:4px solid #ffbf47;outline-offset:3px}
+.primary{background:var(--blue);color:#fff}.soft{background:#e8efff;color:#143d91}.danger{background:#fff0ef;color:#9f241d}
+button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+.actions button{flex:1 1 180px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#f0f4fb;border-radius:14px;padding:14px;text-align:center}
+.stat strong{display:block;font-size:29px;color:var(--blue)}
+.stat span{font-size:15px;color:var(--muted)}
+.muted{color:var(--muted);font-size:15px}
+.progress{height:13px;background:#e7edf6;border-radius:20px;overflow:hidden;margin:12px 0}
+.progress>div{height:100%;width:0;background:var(--blue);transition:width .2s}
+.question{font-size:23px;font-weight:700;margin:16px 0}
+.option{display:block;width:100%;text-align:left;margin:9px 0;background:#f1f4f9;border:2px solid transparent;padding:14px 15px}
+.option:hover{border-color:#9bb7f2}
+.option.correct{background:#e4f6eb;border-color:var(--green)}
+.option.wrong{background:#fff0ef;border-color:var(--red)}
+.feedback{padding:14px;border-radius:12px;margin-top:12px}
+.good{background:#e4f6eb;color:#116438}.bad{background:#fff0ef;color:#9f241d}
+.hidden{display:none!important}
+.pill{display:inline-block;background:#e8efff;color:#143d91;border-radius:30px;padding:5px 11px;font-size:14px;font-weight:bold}
+.result-row{border-top:1px solid var(--line);padding:12px 0}
+.result-row strong{display:block}
+.result-row .answer{font-size:15px;color:var(--muted)}
+details{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+summary{font-weight:700;cursor:pointer}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:20px}
+@media(max-width:560px){body{font-size:17px}.card{padding:16px}.stats{grid-template-columns:repeat(3,1fr);gap:6px}.stat{padding:10px 5px}.stat strong{font-size:23px}.question{font-size:21px}.actions{display:grid}.actions button{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚗 Her Gün 50 Soru</h1>
+  <p>Kolay ehliyet sınavı çalışma uygulaması</p>
+</header>
+<main>
+<section class="card" id="home">
+  <h2>Bugünkü sınavın hazır!</h2>
+  <p id="todayLine"></p>
+  <p>Her gün otomatik olarak yeni bir 50 soruluk deneme hazırlanır. Konu seçmen gerekmez. Cevaplarını bitirdiğinde puanını, istatistiklerini ve yanlışlarını görebilirsin.</p>
+  <div class="stats">
+    <div class="stat"><strong id="homeDone">0</strong><span>Tamamlanan sınav</span></div>
+    <div class="stat"><strong id="homeAverage">0</strong><span>Ortalama puan</span></div>
+    <div class="stat"><strong id="homeBest">0</strong><span>En yüksek puan</span></div>
+  </div>
+  <div class="actions">
+    <button class="primary" id="startBtn">▶ Bugünkü 50 soruluk sınava başla</button>
+    <button class="soft" id="wrongBtn">Yanlış yaptığım sorular</button>
+    <button class="soft" id="statsBtn">İstatistiklerim</button>
+  </div>
+  <p class="muted">Not: Bugünkü sınav aynı gün içinde aynı kalır. Yeni gün başladığında yeni bir soru dizisi hazırlanır. İlerleme ve sonuçlar bu cihazın tarayıcısında saklanır.</p>
+</section>
+
+<section class="card hidden" id="exam">
+  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+    <strong id="qCount">Soru 1 / 50</strong><strong id="liveScore">Doğru: 0</strong>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <span class="pill" id="topic"></span>
+  <div class="question" id="question"></div>
+  <div id="options"></div>
+  <div id="feedback" class="feedback hidden" aria-live="polite"></div>
+  <div class="actions">
+    <button class="soft" id="readBtn">🔊 Soruyu sesli oku</button>
+    <button class="primary" id="nextBtn" disabled>Sonraki soru →</button>
+  </div>
+  <button class="danger" id="quitBtn" style="width:100%;margin-top:10px">Sınavı bırak ve ana sayfaya dön</button>
+</section>
+
+<section class="card hidden" id="result">
+  <h2>🏁 Sınav sonucu</h2>
+  <div class="stats">
+    <div class="stat"><strong id="scoreOut">0</strong><span>Puan</span></div>
+    <div class="stat"><strong id="correctOut">0</strong><span>Doğru</span></div>
+    <div class="stat"><strong id="wrongOut">0</strong><span>Yanlış</span></div>
+  </div>
+  <h3 id="passText" style="margin-top:18px"></h3>
+  <p id="resultMessage"></p>
+  <div class="actions">
+    <button class="primary" id="reviewWrongBtn">Yanlışlarımı incele</button>
+    <button class="soft" id="goHomeBtn">Ana sayfa</button>
+  </div>
+  <h3 style="margin-top:24px">50 sorunun cevap dökümü</h3>
+  <div id="answerReview"></div>
+</section>
+
+<section class="card hidden" id="wrongPage">
+  <h2>Yanlış yaptığın sorular</h2>
+  <p class="muted">Bu bölümde önceki sınavlarda yanlış cevapladığın sorular listelenir. Doğru cevabı ve açıklamayı tekrar edebilirsin.</p>
+  <div id="wrongList"></div>
+  <button class="soft" id="wrongHome" style="width:100%;margin-top:12px">← Ana sayfa</button>
+</section>
+
+<section class="card hidden" id="statsPage">
+  <h2>📊 Genel istatistiklerin</h2>
+  <div class="stats">
+    <div class="stat"><strong id="sExams">0</strong><span>Bitirilen sınav</span></div>
+    <div class="stat"><strong id="sAvg">0</strong><span>Ortalama puan</span></div>
+    <div class="stat"><strong id="sBest">0</strong><span>En iyi puan</span></div>
+  </div>
+  <div class="stats" style="margin-top:10px">
+    <div class="stat"><strong id="sCorrect">0</strong><span>Toplam doğru</span></div>
+    <div class="stat"><strong id="sWrong">0</strong><span>Toplam yanlış</span></div>
+    <div class="stat"><strong id="sRate">0%</strong><span>Başarı oranı</span></div>
+  </div>
+  <h3 style="margin-top:22px">Sınav geçmişi</h3>
+  <div id="history"></div>
+  <div class="actions">
+    <button class="soft" id="statsHome">Ana sayfa</button>
+    <button class="danger" id="resetData">Bütün istatistikleri sil</button>
+  </div>
+</section>
+</main>
+<footer>Bu uygulama çalışma amaçlıdır. Sorular örnek eğitim sorularıdır; resmî sınav soruları olduğu garanti edilmez. Güncel kurallar ve sınav bilgileri için resmî kaynakları kontrol edin.</footer>
+
+<script>
+// Soru havuzu: Her gün buradan otomatik olarak 50 soru seçilir.
+const BANK = [
+["Trafik","Kırmızı trafik ışığı ne anlama gelir?",["Dur","Hızlan","Korna çal","Dikkat etmeden geç"],0,"Kırmızı ışıkta durulur."],
+["Trafik","Sarı trafik ışığı genel olarak neyi bildirir?",["Hızlanmayı","Durmaya hazırlanmayı","Park etmeyi","Geri gitmeyi"],1,"Sarı ışık, güvenli şekilde durmaya hazırlanmayı bildirir."],
+["Trafik","Yeşil ışık yandığında ne yapılır?",["Yol açıksa dikkatle geçilir","Her durumda hızlanılır","Araç durdurulur","Geri gidilir"],0,"Yeşil ışık geçiş izni verir; kavşak yine de kontrol edilmelidir."],
+["Trafik","Yaya geçidine yaklaşan sürücü ne yapmalıdır?",["Hızlanmalı","Yayalara geçiş hakkı vermeli","Korna çalmalı","Şerit değiştirmeli"],1,"Yaya geçidinde yayaların güvenliği gözetilir."],
+["Trafik","Emniyet kemeri ne zaman takılmalıdır?",["Yalnız uzun yolda","Araç hareket etmeden önce","Sadece gece","Sadece sürücü"],1,"Emniyet kemeri yolculuk boyunca takılmalıdır."],
+["Trafik","Takip mesafesi neden korunur?",["Yakıtı artırmak için","Ani duruşta çarpışmayı önlemek için","Öndeki aracı geçmek için","Daha hızlı gitmek için"],1,"Yeterli takip mesafesi güvenli duruşa yardımcı olur."],
+["Trafik","Ambulansın geçiş üstünlüğü kullanarak yaklaştığı görülürse ne yapılır?",["Peşinden gidilir","Güvenli şekilde yol verilir","Yol kapatılır","Hız artırılır"],1,"Geçiş üstünlüğü olan araca güvenli şekilde yol verilmelidir."],
+["Trafik","Sisli havada nasıl araç kullanılmalıdır?",["Hız artırılarak","Takip mesafesi azaltılarak","Hız azaltılıp takip mesafesi artırılarak","Sürekli uzun farla"],2,"Görüş azaldığında hız düşürülür ve mesafe artırılır."],
+["Trafik","Emniyet şeridi hangi amaçla kullanılır?",["Trafikten kaçmak için","Acil durumlar ve yetkili kullanımlar için","Kısa park için","Sollama için"],1,"Emniyet şeridi acil durumlar ve mevzuattaki özel kullanımlar içindir."],
+["Trafik","Kontrolsüz kavşakta geçiş önceliği için hangi kural önemlidir?",["Geçiş hakkı kuralları ve trafik işaretleri","En hızlı araç geçer","Büyük araç daima geçer","Korna çalan geçer"],0,"Kavşakta işaretler ve geçiş hakkı kuralları uygulanır."],
+["Trafik","Sollama yapmadan önce ne kontrol edilmelidir?",["Yalnız müzik sesi","Yolun ve karşıdan gelen trafiğin uygunluğu","Sadece yakıt seviyesi","Arka koltuk"],1,"Sollama öncesinde görüş, yol ve trafik durumu kontrol edilmelidir."],
+["Trafik","Aşağıdakilerden hangisi sürüş güvenliğini azaltır?",["Aynaları kontrol etmek","Hız sınırına uymak","Seyir hâlinde telefonla ilgilenmek","Emniyet kemeri takmak"],2,"Telefon dikkati dağıtır ve kaza riskini artırır."],
+["Trafik","Gece karşıdan araç gelirken hangi far kullanılmalıdır?",["Uzun far","Kısa far","Park lambası","Dörtlü flaşör"],1,"Karşıdan gelen sürücünün gözünü almamak için kısa far kullanılır."],
+["Trafik","Trafik işaret ve levhalarının temel amacı nedir?",["Yolu süslemek","Trafiği düzenlemek ve güvenliği sağlamak","Araçları hızlandırmak","Park yeri göstermek dışında işlevi yoktur"],1,"İşaretler yol kullanıcılarını bilgilendirir, uyarır ve düzenler."],
+["Trafik","Araç kullanırken hız nasıl seçilmelidir?",["Yalnız sürücünün isteğine göre","Yol, hava, trafik ve hız sınırına göre","Her zaman en yüksek hızda","Öndeki araca göre"],1,"Hız; yasal sınır ve koşullara uygun olmalıdır."],
+["Trafik","Demir yolu geçidine yaklaşırken ne yapılmalıdır?",["Kontrol etmeden geçilmeli","Yavaşlayıp işaretleri ve çevreyi kontrol etmeli","Hızlanmalı","Ray üzerinde durmalı"],1,"Geçit işaretleri ve tren olup olmadığı dikkatle kontrol edilir."],
+["Trafik","Kaygan yolda hangi davranış doğrudur?",["Ani fren ve direksiyon hareketlerinden kaçınmak","Ani hızlanmak","Takip mesafesini azaltmak","Sert viraj almak"],0,"Kaygan zeminde yumuşak ve kontrollü hareket edilmelidir."],
+["Trafik","Dönüş yapmadan önce ne yapılmalıdır?",["Sinyal verip çevre kontrolü yapmak","Aniden dönmek","Sadece korna çalmak","Aynaları kapatmak"],0,"Sinyal verilir, aynalar ve kör noktalar kontrol edilir."],
+["Trafik","Park ederken hangi durumdan kaçınılmalıdır?",["Trafiği ve yayaları engellemekten","Aracı güvenli duruma almaktan","Uygun park alanı seçmekten","El frenini kullanmaktan"],0,"Park, trafiği ve yayaların geçişini engellemeyecek yerde yapılmalıdır."],
+["Trafik","Okul geçidine yaklaşırken sürücü ne yapmalıdır?",["Daha dikkatli ve yavaş olmalı","Korna çalıp hızlanmalı","Yakın takip yapmalı","Şerit ortasında durmalı"],0,"Çocukların aniden yola çıkabileceği düşünülerek hız azaltılır."],
+["İlk yardım","Türkiye'de acil yardım numarası hangisidir?",["110","112","155","177"],1,"Acil durumlarda 112 Acil Çağrı Merkezi aranır."],
+["İlk yardım","Kaza yerinde ilk olarak neye dikkat edilmelidir?",["Fotoğraf çekmeye","Olay yeri ve kendi güvenliğine","Araçları hemen taşımaya","Yaralıya yiyecek vermeye"],1,"Önce olay yeri güvenliği değerlendirilir."],
+["İlk yardım","İlk yardımın temel amacı nedir?",["Kesin tedavi yapmak","Hayati tehlikeyi azaltmak ve kötüleşmeyi önlemek","İlaç yazmak","Hastaneye götürmeden tanı koymak"],1,"İlk yardım, profesyonel yardım gelene kadar yaşamı korumayı amaçlar."],
+["İlk yardım","Bilinci kapalı bir kişiyle karşılaşıldığında ne yapılmalıdır?",["Yiyecek içecek vermek","112'yi aramak ve solunumu değerlendirmek","Ayağa kaldırmak","Yalnız bırakmak"],1,"Acil yardım çağrılır; solunum değerlendirilir ve kişi izlenir."],
+["İlk yardım","Kanamada genel ilk yardım yaklaşımı hangisidir?",["Temiz bezle doğrudan bası","Yaraya toprak koymak","Yarayı ovuşturmak","Kanayan bölgeyi kirletmek"],0,"Uygun durumlarda temiz bez veya gazlı bezle doğrudan bası uygulanır."],
+["İlk yardım","Yanık bölgesine ilk olarak ne yapılması uygundur?",["Diş macunu sürmek","Serin akan su altında soğutmak","Buz bastırmak","Yağ sürmek"],1,"Yanık bölge serin akan suyla soğutulur; uygun sağlık yardımı alınır."],
+["İlk yardım","Burkulmalarda ilk yardımda hangisi uygundur?",["Zorlayarak hareket ettirmek","Dinlendirmek ve soğuk uygulamak","Sertçe masaj yapmak","Sıcak suya sokmak"],1,"Bölge dinlendirilir, uygun şekilde soğuk uygulama yapılır."],
+["İlk yardım","Kırık şüphesi olan bölgeye nasıl davranılmalıdır?",["Hareket ettirilmemeli ve sabit tutulmalı","Düzeltilmeye çalışılmalı","Sürekli bükülmeli","Masaj yapılmalı"],0,"Kırık şüphesinde bölge bulunduğu şekilde sabit tutulur; sağlık yardımı istenir."],
+["İlk yardım","112 aranırken hangi bilgi verilmelidir?",["Olay yeri ve durumun özeti","Sadece adımız","Aracın markası","Hava durumu"],0,"Açık konum, olayın türü, yaralı sayısı ve durumları bildirilir."],
+["İlk yardım","Solunumu normal olmayan bilinçsiz yetişkinde ne yapılmalıdır?",["112 aranıp temel yaşam desteğine başlanmalıdır","Su içirilmelidir","Yürütülmelidir","Beklenmelidir"],0,"112 aranır; eğitimli kişiler temel yaşam desteği uygular."],
+["İlk yardım","Burun kanamasında kişi genellikle nasıl tutulur?",["Baş hafif öne eğik","Baş tamamen geriye atılmış","Sırtüstü ve baş aşağı","Koşar durumda"],0,"Baş hafif öne eğilir ve burun kanatlarına uygun bası uygulanır."],
+["İlk yardım","Sara nöbeti geçiren kişiye nasıl yardım edilir?",["Ağzına sert cisim koymak","Çevresini güvenli hâle getirip başını korumak","Hareketlerini zorla durdurmak","Su içirmek"],1,"Kişi yaralanmalardan korunur; ağzına hiçbir şey konulmaz ve nöbet sonrası durumu izlenir."],
+["İlk yardım","Zehirlenme şüphesinde ne yapılmalıdır?",["Kişiyi kusturmak","112 veya UZEM 114'ten profesyonel yönlendirme almak","Süt içirmek","Belirti geçene kadar beklemek"],1,"Zehirlenmede kendi kendine müdahale edilmemeli, profesyonel yardım alınmalıdır."],
+["İlk yardım","Şok belirtileri gösteren kişi için hangisi doğrudur?",["Yardım çağırıp kişiyi sıcak ve rahat tutmak","Yürütmek","Yiyecek vermek","Yalnız bırakmak"],0,"112 aranır, kişi uygun şekilde yatırılır ve sıcak tutulur."],
+["İlk yardım","Yaralı taşınırken temel ilke nedir?",["Gereksiz hareket ettirmemek","Hızlıca çekiştirmek","Başını sallamak","Kolundan sürüklemek"],0,"Acil tehlike yoksa yaralı gereksiz yere hareket ettirilmez."],
+["Araç tekniği","Motor yağının temel görevi nedir?",["Sürtünmeyi azaltmak","Lastiği şişirmek","Farları yakmak","Yakıtı depolamak"],0,"Motor yağı hareketli parçaları yağlayarak aşınmayı azaltır."],
+["Araç tekniği","Lastik hava basıncı ne zaman ölçülmelidir?",["Lastikler soğukken","Uzun yol sonunda sıcakken","Sadece lastik inince","Hiç ölçülmez"],0,"Basınç, üretici önerisine göre lastikler soğukken kontrol edilir."],
+["Araç tekniği","Akünün temel görevi nedir?",["Elektrik enerjisi sağlamak","Motoru yağlamak","Freni soğutmak","Lastikleri döndürmek"],0,"Akü aracın elektrik sistemine enerji sağlar."],
+["Araç tekniği","Motor hararet göstergesi aşırı yükselirse ne yapılmalıdır?",["Güvenli yerde durup motoru kontrol ettirmek","Hızlanmak","Radyatör kapağını sıcakken açmak","Yola devam etmek"],0,"Güvenli yerde durulur; sıcak soğutma sistemi kapağı açılmaz."],
+["Araç tekniği","Fren pedalında anormal değişiklik fark edilirse ne yapılmalıdır?",["Aracı kullanmaya devam etmek","Güvenli yerde durup teknik yardım almak","Daha hızlı gitmek","El frenini sürekli çekmek"],1,"Fren sistemi güvenlik açısından kontrol edilmeden araç kullanılmamalıdır."],
+["Araç tekniği","Hava filtresinin görevi nedir?",["Motora giren havayı temizlemek","Yakıtı soğutmak","Camı silmek","Freni çalıştırmak"],0,"Hava filtresi motora giren havadaki toz ve kirleri tutar."],
+["Araç tekniği","Gösterge panelindeki yağ basınç uyarısı yanarsa ne yapılmalıdır?",["Güvenli yerde durup motoru kapatmak ve kontrol ettirmek","Hızlanmak","Uyarıyı önemsememek","Farları kapatmak"],0,"Yağ basıncı uyarısı ciddi olabilir; güvenli yerde durulup yardım alınmalıdır."],
+["Araç tekniği","Soğutma sisteminin görevi nedir?",["Motor sıcaklığını uygun aralıkta tutmak","Lastikleri soğutmak","Aracı temizlemek","Aküyü şarj etmek"],0,"Soğutma sistemi motorun aşırı ısınmasını önlemeye yardımcı olur."],
+["Araç tekniği","ABS fren sisteminin temel yararı nedir?",["Frenlemede tekerleklerin kilitlenmesini önlemeye yardımcı olmak","Aracı otomatik park etmek","Yakıtı tamamen kesmek","Motoru soğutmak"],0,"ABS, uygun koşullarda frenleme sırasında direksiyon hâkimiyetini korumaya yardımcı olur."],
+["Araç tekniği","Lastik diş derinliği neden önemlidir?",["Yol tutuşu ve su tahliyesi için","Aracın rengini korumak için","Motor sesini artırmak için","Aküyü korumak için"],0,"Yeterli diş derinliği yol tutuşu ve güvenli sürüş için önemlidir."],
+["Araç tekniği","Silecekler ne zaman kontrol edilmelidir?",["Görüşü bozacak şekilde iz bırakmaya başladığında ve düzenli olarak","Sadece yazın","Hiçbir zaman","Motor yağı değişince"],0,"İyi çalışan silecekler yağmurda görüşü korumaya yardımcı olur."],
+["Araç tekniği","Alternatörün görevi nedir?",["Motor çalışırken elektrik üretip aküyü şarj etmek","Fren hidroliğini depolamak","Lastik basıncını ölçmek","Yakıtı temizlemek"],0,"Alternatör elektrik sistemini besler ve akünün şarjına yardımcı olur."],
+["Araç tekniği","Debriyajın görevi nedir?",["Motor ile vites kutusu arasındaki bağlantıyı kontrollü kesip kurmak","Aracı aydınlatmak","Frenleri soğutmak","Yakıtı filtrelemek"],0,"Debriyaj, vites değiştirirken motor ve şanzıman bağlantısını kontrol eder."],
+["Araç tekniği","Farların temiz ve ayarlı olması neden önemlidir?",["Görüş ve görünürlüğü artırmak için","Motoru hızlandırmak için","Yakıtı artırmak için","Lastiği korumak için"],0,"Farların doğru ayarı hem sürücünün görüşünü hem de diğerlerinin fark edilmesini sağlar."],
+["Araç tekniği","Soğutma sıvısı seviyesi ne zaman kontrol edilmelidir?",["Motor soğukken ve güvenli şekilde","Motor çok sıcakken kapağı açarak","Araç hareket hâlindeyken","Sadece lastik değişiminde"],0,"Seviye motor soğukken kontrol edilir; sıcak sistem kapağı açılmaz."],
+["Trafik adabı","Başka bir sürücü hata yaptığında nasıl davranılmalıdır?",["Sakin ve anlayışlı olmak","Tartışmak","İnatla takip etmek","Tehlikeli şekilde önüne geçmek"],0,"Sakin ve saygılı davranış trafik güvenliğini artırır."],
+["Trafik adabı","Gereksiz korna kullanımı nasıldır?",["Her zaman faydalıdır","Gürültü ve rahatsızlığa neden olur","Trafik kurallarını değiştirir","Yakıt tasarrufu sağlar"],1,"Korna yalnızca gerekli uyarı durumlarında kullanılmalıdır."],
+["Trafik adabı","Trafikte empati ne demektir?",["Diğer yol kullanıcılarının durumunu anlamaya çalışmak","Sadece kendini düşünmek","Sürekli öncelik istemek","Kuralları önemsememek"],0,"Empati, diğer kişilerin güvenlik ve ihtiyaçlarını dikkate almaktır."],
+["Trafik adabı","Sürüş sırasında öfkelendiğinizde ne yapmak daha doğrudur?",["Sakinleşip güvenli sürüşe odaklanmak","Hızlanmak","Diğer sürücüyü sıkıştırmak","Korna ile tartışmak"],0,"Öfkeyle araç kullanmak risklidir; sakin kalmak gerekir."],
+["Trafik adabı","Yaşlı veya engelli bir yaya geçmekte zorlanıyorsa ne yapılmalıdır?",["Sabırla geçişine imkân vermek","Korna çalmak","Yakınından hızla geçmek","Yolunu kapatmak"],0,"Sabırlı ve saygılı davranmak güvenli ve doğru tutumdur."],
+["Trafik adabı","Trafikte paylaşım ve hoşgörü ne sağlar?",["Daha güvenli ve düzenli trafik ortamı","Daha fazla tartışma","Kuralsızlık","Daha yüksek hız"],0,"Hoşgörü ve iş birliği çatışmaları ve riskleri azaltır."],
+["Trafik adabı","Bir sürücü geçiş hakkını size verdiğinde ne yapılmalıdır?",["Güvenli olduğundan emin olup dikkatle ilerlemek","Kontrol etmeden hızla geçmek","Ani manevra yapmak","Korna çalmak"],0,"Diğer sürücünün davranışı ne olursa olsun çevre kontrolü sürdürülür."],
+["Trafik adabı","Trafik kurallarına uymak kimin sorumluluğudur?",["Yalnız profesyonel sürücülerin","Tüm yol kullanıcılarının","Yalnız yayaların","Sadece motosikletlilerin"],1,"Trafik güvenliği herkesin ortak sorumluluğudur."],
+["Trafik","Dörtlü ikaz lambaları ne amaçla kullanılır?",["Tehlike veya arıza durumunda uyarmak","Her parkta süs olarak","Sollama izni vermek","Hız sınırını bildirmek"],0,"Dörtlü ikaz lambaları aracın tehlike oluşturduğu veya arızalandığı durumlarda uyarı amacıyla kullanılır."],
+["Trafik","Araçta çocuk yolcu taşınırken neye dikkat edilmelidir?",["Çocuğa uygun güvenlik koltuğu ve kemer kullanmaya","Çocuğu kucakta taşımaya","Ön panelde oturtmaya","Kemer kullanmamaya"],0,"Çocuğun yaşına ve boyuna uygun çocuk güvenlik sistemi kullanılmalıdır."],
+["Trafik","Sürücü yorgunluk hissettiğinde ne yapmalıdır?",["Mola verip dinlenmek","Kahve içip hiç durmadan devam etmek","Hızını artırmak","Camı açıp devam etmek"],0,"Yorgunluk dikkati azaltır; güvenli yerde mola verilmelidir."],
+["Trafik","Yağmurlu havada fren mesafesi genellikle nasıl değişir?",["Uzar","Kısalır","Değişmez","Sıfırlanır"],0,"Islak zeminde yol tutuşu azalabilir ve durma mesafesi uzar."],
+["Trafik","Kör nokta nedir?",["Aynalarla her zaman görülemeyen alan","Aracın motor bölümü","Yolun aydınlık kısmı","Park alanı"],0,"Şerit değiştirmeden önce aynalara ek olarak kör nokta kontrolü yapılmalıdır."],
+["Trafik","Sinyal vermek neyi sağlar?",["Diğer yol kullanıcılarına niyeti bildirmeyi","Geçiş üstünlüğü kazanmayı","Hız sınırını artırmayı","Park yasağını kaldırmayı"],0,"Sinyal, yapılacak manevrayı önceden bildirir; tek başına geçiş hakkı vermez."],
+["İlk yardım","İlk yardım uygulayan kişi öncelikle ne yapmalıdır?",["Kendi güvenliğini sağlamalı","Kalabalığı artırmalı","Yaralıya ilaç vermeli","Olay yerini terk etmeli"],0,"Yardım eden kişinin güvenliği de korunmalıdır."],
+["İlk yardım","Yaralıya bilinçsizce yiyecek veya içecek vermek neden yanlıştır?",["Solunum yoluna kaçma riski olabilir","Her zaman iyileştirir","Ağrıyı kesin geçirir","Kanamayı durdurur"],0,"Bilinç durumu uygun olmayan kişiye ağızdan bir şey verilmez."],
+["İlk yardım","Elektrik çarpmasında yaralıya dokunmadan önce ne yapılmalıdır?",["Elektrik kaynağını güvenle kesmek","Hemen çıplak elle tutmak","Su dökmek","Metal cisimle çekmek"],0,"Önce elektrik akımı güvenli şekilde kesilmelidir; sonra acil yardım çağrılır."],
+["Araç tekniği","Periyodik araç bakımı neden yapılır?",["Aracın güvenli ve verimli çalışmasına yardımcı olmak","Sadece aracın rengini korumak","Trafik cezasını kaldırmak","Hız sınırını artırmak"],0,"Bakım, arızaların erken fark edilmesine ve güvenli kullanıma katkı sağlar."],
+["Araç tekniği","Park hâlindeki aracı yokuşta bırakırken ne yapılmalıdır?",["Uygun park tedbirleri ve park freni kullanılmalı","Vites boşa alınmalı ve önlem alınmamalı","Motor yüksek devirde bırakılmalı","Kapılar açık bırakılmalı"],0,"Park freni ve uygun vites/park tedbirleri aracın hareket etmesini önlemeye yardımcı olur."],
+["Trafik","Trafik görevlisinin işareti ile ışıklı işaret çelişirse hangisine uyulur?",["Trafik görevlisinin işaretine","Yalnız yeşil ışığa","Öndeki aracın hareketine","Hiçbirine"],0,"Trafik görevlisinin yönlendirmelerine öncelikle uyulur."],
+["Trafik","Araç kullanırken aynalar ne zaman kontrol edilmelidir?",["Düzenli olarak ve manevra öncesinde","Sadece park ederken","Yalnız gece","Hiçbir zaman"],0,"Aynalar trafik durumunu izlemek ve manevraları güvenli yapmak için kullanılır."],
+["Trafik adabı","Bir kaza sonrası çevredeki kişiler nasıl davranmalıdır?",["Güvenliği koruyup yetkililere yardımcı olmalı","Olay yerini kalabalıklaştırmalı","Yaralıları izinsiz taşımaya çalışmalı","Yolu kapatmalı"],0,"Gereksiz kalabalık ve müdahale önlenmeli, güvenli yardım sağlanmalıdır."],
+["Araç tekniği","Yakıt tasarrufu için hangi davranış uygundur?",["Ani hızlanma ve frenlerden kaçınmak","Lastik basıncını düşürmek","Aracı gereksiz rölantide çalıştırmak","Sürekli yüksek devir kullanmak"],0,"Dengeli hız ve doğru araç bakımı yakıt tüketimini azaltmaya yardımcı olur."],
+["İlk yardım","Göz içine yabancı cisim kaçtığında ne yapılmalıdır?",["Gözü ovuşturmamak ve uygun sağlık yardımı almak","Sert cisimle çıkarmak","Göze bastırmak","Kimyasal dökmek"],0,"Göz ovuşturulmamalı; ciddi veya çıkmayan cisimlerde sağlık kuruluşuna başvurulmalıdır."]
+];
+
+const $=id=>document.getElementById(id);
+const today=new Date();
+const dateKey=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
+const dateText=today.toLocaleDateString("tr-TR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+$("todayLine").textContent="Bugün: "+dateText;
+const STORE="kolayEhliyet50_v1";
+function load(){try{return JSON.parse(localStorage.getItem(STORE))||{history:[],wrong:{}}}catch(e){return {history:[],wrong:{}}}}
+let data=load(), exam=[], pos=0, selected=null, answers=[];
+function save(){localStorage.setItem(STORE,JSON.stringify(data))}
+function shuffleSeeded(arr,seed){
+ let a=arr.slice(),x=seed>>>0;
+ function rand(){x=(x*1664525+1013904223)>>>0;return x/4294967296}
+ for(let i=a.length-1;i>0;i--){let j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+ return a
+}
+function dailyExam(){
+ let seed=0;for(let ch of dateKey)seed=(seed*31+ch.charCodeAt(0))>>>0;
+ return shuffleSeeded(BANK,seed).slice(0,50);
+}
+function panel(id){["home","exam","result","wrongPage","statsPage"].forEach(k=>$(k).classList.toggle("hidden",k!==id))}
+function stats(){
+ let h=data.history, total=h.length, avg=total?Math.round(h.reduce((s,x)=>s+x.score,0)/total):0,best=total?Math.max(...h.map(x=>x.score)):0;
+ $("homeDone").textContent=total;$("homeAverage").textContent=avg;$("homeBest").textContent=best;
+ $("sExams").textContent=total;$("sAvg").textContent=avg;$("sBest").textContent=best;
+ let c=h.reduce((s,x)=>s+x.correct,0),w=h.reduce((s,x)=>s+x.wrong,0);
+ $("sCorrect").textContent=c;$("sWrong").textContent=w;$("sRate").textContent=(c+w?Math.round(c/(c+w)*100):0)+"%";
+ $("history").innerHTML=h.length?h.slice().reverse().map(x=>`<div class="result-row"><strong>${escapeHtml(x.date)} — ${x.score} puan</strong><span class="answer">${x.correct} doğru, ${x.wrong} yanlış</span></div>`).join(""):"Henüz tamamlanmış sınav yok.";
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function begin(){
+ exam=dailyExam();pos=0;selected=null;answers=[];panel("exam");draw();
+}
+function draw(){
+ let q=exam[pos];$("qCount").textContent=`Soru ${pos+1} / 50`;$("liveScore").textContent=`Doğru: ${answers.filter(x=>x.correct).length}`;
+ $("bar").style.width=(pos/50*100)+"%";$("topic").textContent=q[0];$("question").textContent=q[1];
+ $("options").innerHTML="";$("feedback").className="feedback hidden";$("feedback").textContent="";
+ $("nextBtn").disabled=true;$("nextBtn").textContent=pos===49?"Sınavı bitir":"Sonraki soru →";
+ q[2].forEach((opt,i)=>{let b=document.createElement("button");b.className="option";b.textContent=String.fromCharCode(65+i)+") "+opt;b.onclick=()=>answer(i);$("options").appendChild(b)});
+}
+function answer(i){
+ if(selected!==null)return;selected=i;let q=exam[pos],ok=i===q[3];answers.push({q,choice:i,correct:ok});
+ [...$("options").children].forEach((b,n)=>{b.disabled=true;if(n===q[3])b.classList.add("correct");if(n===i&&!ok)b.classList.add("wrong")});
+ $("liveScore").textContent=`Doğru: ${answers.filter(x=>x.correct).length}`;
+ let f=$("feedback");f.className="feedback "+(ok?"good":"bad");f.textContent=(ok?"Doğru cevap. ":"Yanlış cevap. Doğru seçenek: "+String.fromCharCode(65+q[3])+". ")+q[4];
+ $("nextBtn").disabled=false;
+}
+function finish(){
+ let correct=answers.filter(x=>x.correct).length,wrong=50-correct,score=correct*2;
+ let record={date:dateKey,score,correct,wrong,answers:answers.map(a=>({question:a.q[1],topic:a.q[0],choice:a.choice,options:a.q[2],correctIndex:a.q[3],explanation:a.q[4],isCorrect:a.correct}))};
+ data.history=data.history.filter(x=>x.date!==dateKey);data.history.push(record);
+ answers.filter(a=>!a.correct).forEach(a=>{let key=a.q[1];data.wrong[key]={question:a.q[1],topic:a.q[0],options:a.q[2],correctIndex:a.q[3],explanation:a.q[4],yourChoice:a.choice,lastDate:dateKey,count:(data.wrong[key]?.count||0)+1}});
+ save();
+ $("scoreOut").textContent=score;$("correctOut").textContent=correct;$("wrongOut").textContent=wrong;
+ $("passText").textContent=score>=70?"Tebrikler! 70 puan ve üzeri.":"Biraz daha çalışabilirsin.";
+ $("resultMessage").textContent=`50 sorudan ${correct} tanesini doğru yaptın. Her doğru cevap 2 puandır.`;
+ $("answerReview").innerHTML=record.answers.map((a,i)=>`<div class="result-row"><strong>${i+1}. ${escapeHtml(a.question)}</strong><span class="answer">${a.isCorrect?"✅ Doğru":"❌ Yanlış"} · Doğru cevap: ${String.fromCharCode(65+a.correctIndex)}) ${escapeHtml(a.options[a.correctIndex])}<br>${escapeHtml(a.explanation)}</span></div>`).join("");
+ stats();panel("result");
+}
+function showWrong(){
+ let arr=Object.values(data.wrong).sort((a,b)=>b.lastDate.localeCompare(a.lastDate));
+ $("wrongList").innerHTML=arr.length?arr.map((q,i)=>`<details><summary>${i+1}. ${escapeHtml(q.question)} <span class="muted">(${q.count} kez yanlış)</span></summary><p><b>Konu:</b> ${escapeHtml(q.topic)}</p><p><b>Doğru cevap:</b> ${String.fromCharCode(65+q.correctIndex)}) ${escapeHtml(q.options[q.correctIndex])}</p><p>${escapeHtml(q.explanation)}</p><p class="muted">Son yanlış tarihi: ${escapeHtml(q.lastDate)}</p></details>`).join(""):"Henüz yanlış soru kaydın yok. Bir sınavı bitirdiğinde yanlışların burada görünür.";
+ panel("wrongPage");
+}
+function speak(text){if(!("speechSynthesis" in window)){alert("Tarayıcınız sesli okumayı desteklemiyor.");return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="tr-TR";u.rate=.9;speechSynthesis.speak(u)}
+$("startBtn").onclick=begin;
+$("nextBtn").onclick=()=>{if(pos<49){pos++;selected=null;draw()}else finish()};
+$("readBtn").onclick=()=>{let q=exam[pos];speak(q[1]+". Seçenekler: "+q[2].join(". "))};
+$("quitBtn").onclick=()=>{if(confirm("Sınavdan çıkılsın mı? Bu sınavın sonucu kaydedilmeyecek.")){if("speechSynthesis"in window)speechSynthesis.cancel();panel("home")}};
+$("wrongBtn").onclick=showWrong;$("reviewWrongBtn").onclick=showWrong;
+$("statsBtn").onclick=()=>{stats();panel("statsPage")};
+$("goHomeBtn").onclick=()=>panel("home");$("wrongHome").onclick=()=>panel("home");$("statsHome").onclick=()=>panel("home");
+$("resetData").onclick=()=>{if(confirm("Bütün sınav geçmişi ve yanlış soru kayıtları silinsin mi?")){data={history:[],wrong:{}};save();stats();}};
+stats();
+</script>
+</body>
+</html>
